@@ -1,19 +1,27 @@
-import type { Metadata } from 'next'
-import './globals.css'
+// app/layout.tsx
+import type React from "react"
+import "./globals.css"
+import "./components/animations.css"
+import { Providers } from "./providers"
 
-export const metadata: Metadata = {
-  title: 'Shaman - Your AI Assistant',
-  description: 'Shaman is an AI assistant that helps you with your tasks, powered by Gemini.',
+export const metadata = {
+    title: "Shaman App",
+    description: "Your personal assistant for paperwork",
+    generator: "v0.dev",
 }
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
+                                       children,
+                                   }: Readonly<{
+    children: React.ReactNode
 }>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+    return (
+        <html lang="en" suppressHydrationWarning>
+        <body className="transition-colors duration-300 bg-stone-50 dark:bg-stone-900">
+        <Providers>
+            {children}
+        </Providers>
+        </body>
+        </html>
+    )
 }
