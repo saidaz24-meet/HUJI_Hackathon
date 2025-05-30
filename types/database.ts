@@ -4,7 +4,7 @@ export interface Task {
   id: string
   title: string
   description: string
-  status: "pending" | "in-progress" | "completed" | "scheduled"
+  status: "pending" | "in-progress" | "completed" | "scheduled" | "need-input" | "input-received"
   priority: "low" | "medium" | "high"
   createdAt: string // ISO string
   scheduledFor?: string // ISO string
@@ -22,8 +22,9 @@ export interface Task {
   steps?: TaskStep[]
   progress?: number // 0-100 percentage
   completedAt?: string // ISO string when completed
-  startTime?: number // Unix timestamp when task started processing
+  startTime?: number // Unix timestamp when task started processing  
   model: "shaman-light" | "shaman-pro" // Model to use for processing
+  neededData?: string // Data needed from the user for "need-input" tasks
   completionProof?: CompletionProof // Proof of task completion
 }
 

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { DatabaseService } from "@/lib/firebase/database"
 import { useToast } from "@/hooks/use-toast"
 import type { Task, Attachment } from "@/types/database"
+import { DataInputDialog } from "@/components/data-input-dialog"
 
 import {
   ArrowRight,
@@ -95,7 +96,7 @@ export default function DashboardPage() {
       icon: <Sparkles className="w-4 h-4 text-purple-500" />,
     },
   ]
-  const [selectedModel, setSelectedModel] = useState<string>("shaman-light")
+  const [selectedModel, setSelectedModel] = useState<"shaman-light" | "shaman-pro">("shaman-light")
 
   useEffect(() => {
     if (!user) {
@@ -430,38 +431,35 @@ export default function DashboardPage() {
     }
   }
 
-  const handleProvideProfileData = async () => {
-    if (!currentNeedInputTask || !user) return
+  const handleDataInputSubmit = async (taskId: string, enteredData: string) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "User not authenticated.",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
-      // In a real implementation, you would collect the needed profile data
-      // from the user interface. For now, we'll just mock it.
-      const neededData = currentNeedInputTask.neededData || []
-      const profileData: Record<string, string> = {}
-
-      // Extract needed fields from user profile
-      neededData.forEach(field => {
-        if (field === "displayName") profileData[field] = user.displayName || ""
-        else if (field === "email") profileData[field] = user.email || ""
-        else if (field === "photoURL") profileData[field] = user.photoURL || ""
-        // Add more fields as needed
+      // Update the neededData field with the user's input
+      await DatabaseService.updateTask(user.uid, taskId, {
+        neededData: enteredData,
+        status: "input-received", // Change status to prevent immediate reappearance
       })
-
-      // Update the task status back to in-progress
-      await DatabaseService.updateTaskStatus(user.uid, currentNeedInputTask.id, "in-progress", profileData)
 
       setOpenNeedInputDialog(false)
       setCurrentNeedInputTask(null)
 
       toast({
-        title: "Profile Data Provided",
-        description: "Your task will continue processing.",
+        title: "Input Received",
+        description: "Your input has been submitted. Task status updated.",
       })
     } catch (error) {
-      console.error("Error providing profile data:", error)
+      console.error("Error submitting data input:", error)
       toast({
         title: "Error",
-        description: "Failed to provide profile data. Please try again.",
+        description: "Failed to submit input. Please try again.",
         variant: "destructive",
       })
     }
@@ -997,36 +995,13 @@ export default function DashboardPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Need Input Dialog */}
-        {currentNeedInputTask && (
-            <Dialog open={openNeedInputDialog} onOpenChange={setOpenNeedInputDialog}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Profile Information Needed</DialogTitle>
-                  <DialogDescription>
-                    Additional information is needed to process your task. The system needs the following details from your profile:
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <ul className="list-disc pl-5 space-y-2">
-                    {currentNeedInputTask.neededData?.map((field, index) => (
-                        <li key={index} className="text-stone-700 dark:text-stone-300">
-                          {formatFieldName(field)}
-                        </li>
-                    ))}
-                  </ul>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenNeedInputDialog(false)}>
-                    Later
-                  </Button>
-                  <Button onClick={handleProvideProfileData}>
-                    Provide Information
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-        )}
+        {/* Data Input Dialog */}
+        <DataInputDialog
+          isOpen={openNeedInputDialog}
+          onClose={() => setOpenNeedInputDialog(false)}
+          task={currentNeedInputTask}
+          onSubmit={handleDataInputSubmit}
+        />
       </div>
   )
 }

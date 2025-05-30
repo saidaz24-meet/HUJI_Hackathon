@@ -98,57 +98,25 @@ export class DatabaseService {
     return () => off(tasksRef, "value", unsubscribe)
   }
 
-  // Update task status
-  static async updateTaskStatus(
-      userId: string,
-      taskId: string,
-      status: Task["status"],
-      profileData?: Record<string, string>
-  ): Promise<void> {
+  // Update task
+  static async updateTask(userId: string, taskId: string, updates: Partial<Task>): Promise<void> {
     if (USE_MOCK_DATA) {
-      mockDatabase.updateTask(taskId, { status })
+      mockDatabase.updateTask(taskId, updates)
       return
     }
 
     try {
       const taskRef = ref(db, `users/${userId}/tasks/${taskId}`)
+      await update(taskRef, updates)
 
-      if (status === "in-progress" && profileData) {
-        // Update the task with profile data and change status
-        await update(taskRef, {
-          status,
-          profileData,
-          updatedAt: new Date().toISOString()
-        })
-
-        // Update in pending tasks if it exists there
-        const pendingTaskRef = ref(db, `pendingTasks/${taskId}`)
-        const snapshot = await get(pendingTaskRef)
-        if (snapshot.exists()) {
-          await update(pendingTaskRef, {
-            status,
-            profileData,
-            updatedAt: new Date().toISOString()
-          })
-        }
-      } else {
-        // Just update the status
-        const updates = {
-          status,
-          ...(status === "completed" ? { completedAt: new Date().toISOString() } : {})
-        }
-
-        await update(taskRef, updates)
-
-        // Update in pending tasks if it exists there
-        const pendingTaskRef = ref(db, `pendingTasks/${taskId}`)
-        const snapshot = await get(pendingTaskRef)
-        if (snapshot.exists()) {
-          await update(pendingTaskRef, updates)
-        }
+      // Update in pending tasks if it exists there
+      const pendingTaskRef = ref(db, `pendingTasks/${taskId}`)
+      const snapshot = await get(pendingTaskRef)
+      if (snapshot.exists()) {
+        await update(pendingTaskRef, updates)
       }
     } catch (error) {
-      console.error("Error updating task status:", error)
+      console.error("Error updating task:", error)
       throw error
     }
   }
@@ -172,29 +140,6 @@ export class DatabaseService {
       }
     } catch (error) {
       console.error("Error deleting task:", error)
-      throw error
-    }
-  }
-
-  // Update task details
-  static async updateTaskDetails(userId: string, taskId: string, updates: Partial<Task>): Promise<void> {
-    if (USE_MOCK_DATA) {
-      mockDatabase.updateTask(taskId, updates)
-      return
-    }
-
-    try {
-      const taskRef = ref(db, `users/${userId}/tasks/${taskId}`)
-      await update(taskRef, updates)
-
-      // Update in pending tasks if it exists there
-      const pendingTaskRef = ref(db, `pendingTasks/${taskId}`)
-      const snapshot = await get(pendingTaskRef)
-      if (snapshot.exists()) {
-        await update(pendingTaskRef, updates)
-      }
-    } catch (error) {
-      console.error("Error updating task details:", error)
       throw error
     }
   }
