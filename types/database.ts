@@ -1,3 +1,4 @@
+// types/database.ts
 // Database types for Firebase Realtime Database
 export interface Task {
   id: string
@@ -21,6 +22,16 @@ export interface Task {
   steps?: TaskStep[]
   progress?: number // 0-100 percentage
   completedAt?: string // ISO string when completed
+  startTime?: number // Unix timestamp when task started processing
+  model: "shaman-light" | "shaman-pro" // Model to use for processing
+  completionProof?: CompletionProof // Proof of task completion
+}
+
+export interface CompletionProof {
+  type: "document" | "screenshot" | "confirmation" | "report"
+  url?: string
+  reference?: string
+  summary: string
 }
 
 export interface TaskStep {
@@ -59,6 +70,15 @@ export interface Agent {
   capabilities: string[]
 }
 
+export interface Notification {
+  id: string
+  message: string
+  type: "info" | "success" | "warning" | "error"
+  createdAt: string
+  read: boolean
+  taskId?: string
+}
+
 export interface DatabaseStructure {
   users: {
     [userId: string]: {
@@ -67,13 +87,7 @@ export interface DatabaseStructure {
         [taskId: string]: Task
       }
       notifications: {
-        [notificationId: string]: {
-          id: string
-          message: string
-          type: "info" | "success" | "warning" | "error"
-          createdAt: string
-          read: boolean
-        }
+        [notificationId: string]: Notification
       }
     }
   }

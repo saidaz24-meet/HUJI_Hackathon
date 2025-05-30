@@ -52,7 +52,7 @@ const STATUS_CONFIG = {
   },
 }
 
-export function TaskOverviewDisplay({ taskStats, onSegmentClick }: TaskOverviewDisplayProps) {
+export function TaskOverviewDisplay({ taskStats = { pending: 0, inProgress: 0, scheduled: 0, completed: 0 }, onSegmentClick }: TaskOverviewDisplayProps) {
   const totalTasks = taskStats.pending + taskStats.inProgress + taskStats.scheduled + taskStats.completed
 
   const getStatusKey = (status: string) => {
